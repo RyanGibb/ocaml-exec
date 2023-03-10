@@ -19,7 +19,7 @@
  (name ocaml_exec)
  (synopsis "A short synopsis")
  (description "A longer description")
- (depends ocaml dune)
+ (depends (ocaml (>= 5.0.0)) dune eio_main)
  (tags
   (topics "to describe" your project)))
 
