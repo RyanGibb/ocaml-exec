@@ -6,6 +6,7 @@ let () =
   (* if parent *)
   if pid != 0 then (
     let close_unix = true in
+    (* TODO redirect client side PTY IO or handle interupts etc *)
     Eio.Fiber.both
       (fun () -> Eio.Switch.run @@ fun sw ->
         let sink = Eio_unix.FD.as_socket ~sw ~close_unix pty.Pty.masterfd in
@@ -21,6 +22,7 @@ let () =
     Unix.dup2 pty.Pty.slavefd Unix.stdout;
     Unix.dup2 pty.Pty.slavefd Unix.stderr;
     Unix.close pty.Pty.slavefd;
+    (* TODO get default shell from /etc/passwd *)
     try Unix.execve "/run/current-system/sw/bin/bash"
       (* login shell *)
       [| "-bash"; |]
