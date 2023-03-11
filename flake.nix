@@ -5,7 +5,7 @@
     opam-nix.inputs.nixpkgs.follows = "nixpkgs";
   };
   outputs = { self, nixpkgs, flake-utils, opam-nix, ... }@inputs:
-    let package = "ocaml_exec";
+    let package = "ocaml_exec_shell";
     in flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};

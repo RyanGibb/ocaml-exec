@@ -1,6 +1,6 @@
 (lang dune 3.6)
 
-(name ocaml_exec)
+(name ocaml_exec_shell)
 
 (generate_opam_files true)
 
@@ -16,7 +16,7 @@
 (documentation https://url/to/documentation)
 
 (package
- (name ocaml_exec)
+ (name ocaml_exec_shell)
  (synopsis "A short synopsis")
  (description "A longer description")
  (depends (ocaml (>= 5.0.0)) dune eio_main)

@@ -1,4 +1,5 @@
 (executable
- (public_name ocaml_exec)
+ (public_name ocaml_exec_shell)
  (name main)
- (libraries unix eio_main))
+ (libraries unix eio_main)
+ (foreign_stubs (language c) (names pty)))
