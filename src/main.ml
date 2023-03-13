@@ -38,17 +38,21 @@ let () =
     tio.c_vtime <- 0;
     Unix.tcsetattr Unix.stdin TCSADRAIN tio;
 
-    let handle_sigchild (_signum : int) = exit 1 in
+    let stop = Eio.Condition.create () in
+    let handle_sigchild (_signum : int) = Eio.Condition.broadcast stop in
     ignore (Sys.signal Sys.sigchld (Signal_handle handle_sigchild));
 
     let close_unix = true in
-    Eio.Fiber.both
+    Eio.Fiber.all [
       (fun () -> Eio.Switch.run @@ fun sw ->
         let sink = Eio_unix.FD.as_socket ~sw ~close_unix pty.Pty.masterfd in
-        Eio.Flow.copy (Eio.Stdenv.stdin env) sink)
+        Eio.Flow.copy (Eio.Stdenv.stdin env) sink);
       (fun () -> Eio.Switch.run @@ fun sw ->
         let source = Eio_unix.FD.as_socket ~sw ~close_unix pty.Pty.masterfd in
-        Eio.Flow.copy source (Eio.Stdenv.stdout env));
+        Eio.Flow.copy source (Eio.Stdenv.stdout env)
+      );
+      (fun () -> Eio.Condition.await_no_mutex stop; failwith "Simulated error");
+    ];
     (* restore tio *)
     Unix.tcsetattr Unix.stdin TCSADRAIN savedTio;
   ) else
