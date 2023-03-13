@@ -58,29 +58,28 @@ let client ~stdout ~stdin pty =
 
 let server pty =
   Unix.close pty.Pty.masterfd;
-    Pty.switch_controlling_pty pty;
-    (* TODO Pty.window_size pty pty_window; *)
-    Unix.dup2 pty.Pty.slavefd Unix.stdin;
-    Unix.dup2 pty.Pty.slavefd Unix.stdout;
-    Unix.dup2 pty.Pty.slavefd Unix.stderr;
-    Unix.close pty.Pty.slavefd;
-    (* TODO get default shell from /etc/passwd *)
-    try Unix.execve "/run/current-system/sw/bin/bash"
-      (* login shell *)
-      [| "-bash"; |]
-      (Unix.unsafe_environment ())
-      (* [| "PATH=" ^ Unix.getenv "PATH" |];; *)
-    with Unix.Unix_error (x,_s,y) ->
-      print_endline (Printf.sprintf "%s: %s" y (Unix.error_message x));
-    Pty.close_pty pty
+  Pty.switch_controlling_pty pty;
+  (* TODO Pty.window_size pty pty_window; *)
+  Unix.dup2 pty.Pty.slavefd Unix.stdin;
+  Unix.dup2 pty.Pty.slavefd Unix.stdout;
+  Unix.dup2 pty.Pty.slavefd Unix.stderr;
+  Unix.close pty.Pty.slavefd;
+  (* TODO get default shell from /etc/passwd *)
+  try Unix.execve "/run/current-system/sw/bin/bash"
+    (* login shell *)
+    [| "-bash"; |]
+    (Unix.unsafe_environment ())
+    (* [| "PATH=" ^ Unix.getenv "PATH" |];; *)
+  with Unix.Unix_error (x,_s,y) ->
+    print_endline (Printf.sprintf "%s: %s" y (Unix.error_message x));
+  Pty.close_pty pty
 
 let () =
   Eio_main.run @@ fun env ->
   let pty = Pty.open_pty () in
-  (* fork–exec *)
   let pid = Unix.fork () in
-  (* if parent *)
-  if pid != 0 then
-    client ~stdout:(Eio.Stdenv.stdout env) ~stdin:(Eio.Stdenv.stdin env) pty
-  else
+  (* if child *)
+  if pid == 0 then
     server pty
+  else
+    client ~stdout:(Eio.Stdenv.stdout env) ~stdin:(Eio.Stdenv.stdin env) pty
