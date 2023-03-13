@@ -5,15 +5,49 @@ let () =
   let pid = Unix.fork () in
   (* if parent *)
   if pid != 0 then (
+    (* TODO is there a way to clone tio, rather than calling `tcgetattr` twice? *)
+    let savedTio = Unix.tcgetattr Unix.stdin in
+    let tio = Unix.tcgetattr Unix.stdin in
+    
+    (* set raw mode *)
+
+    (* input modes *)
+    tio.c_ignpar <- true;
+    tio.c_istrip <- false;
+    tio.c_inlcr <- false;
+    tio.c_igncr <- false;
+    tio.c_ixon <- false;
+    (* tio.c_ixany <- false; *)
+    (* tio.c_iuclc <- false; *)
+    tio.c_ixoff <- false;
+
+    (* output modes *)
+    tio.c_opost <- false;
+
+    (* control modes *)
+    tio.c_isig <- false;
+    tio.c_icanon <- false;
+    tio.c_echo <- false;
+    tio.c_echoe <- false;
+    tio.c_echok <- false;
+    tio.c_echonl <- false;
+    (* tio.c_iexten <- false; *)
+
+    (* special characters *)
+    tio.c_vmin <- 1;
+    tio.c_vtime <- 0;
+    Unix.tcsetattr Unix.stdin TCSADRAIN tio;
+
     let close_unix = true in
-    (* TODO redirect client side PTY IO or handle interupts etc *)
     Eio.Fiber.both
       (fun () -> Eio.Switch.run @@ fun sw ->
         let sink = Eio_unix.FD.as_socket ~sw ~close_unix pty.Pty.masterfd in
         Eio.Flow.copy (Eio.Stdenv.stdin env) sink)
       (fun () -> Eio.Switch.run @@ fun sw ->
         let source = Eio_unix.FD.as_socket ~sw ~close_unix pty.Pty.masterfd in
-        Eio.Flow.copy source (Eio.Stdenv.stdout env))
+        Eio.Flow.copy source (Eio.Stdenv.stdout env));
+    (* restore tio *)
+    Unix.tcsetattr Unix.stdin TCSADRAIN savedTio;
   ) else
     Unix.close pty.Pty.masterfd;
     Pty.switch_controlling_pty pty;
