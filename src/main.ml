@@ -1,42 +1,43 @@
 
 let client ~stdout ~stdin pty =
-  (* TODO is there a way to clone tio, rather than calling `tcgetattr` twice? *)
   let savedTio = Unix.tcgetattr Unix.stdin in
-  let tio = Unix.tcgetattr Unix.stdin in
-  
+
   (* set raw mode *)
+  let tio = {
+    savedTio with
+      (* input modes *)
+      c_ignpar = true;
+      c_istrip = false;
+      c_inlcr = false;
+      c_igncr = false;
+      c_ixon = false;
+      (* c_ixany = false; *)
+      (* c_iuclc = false; *)
+      c_ixoff = false;
 
-  (* input modes *)
-  tio.c_ignpar <- true;
-  tio.c_istrip <- false;
-  tio.c_inlcr <- false;
-  tio.c_igncr <- false;
-  tio.c_ixon <- false;
-  (* tio.c_ixany <- false; *)
-  (* tio.c_iuclc <- false; *)
-  tio.c_ixoff <- false;
+      (* output modes *)
+      c_opost = false;
 
-  (* output modes *)
-  tio.c_opost <- false;
+      (* control modes *)
+      c_isig = false;
+      c_icanon = false;
+      c_echo = false;
+      c_echoe = false;
+      c_echok = false;
+      c_echonl = false;
+      (* c_iexten = false; *)
 
-  (* control modes *)
-  tio.c_isig <- false;
-  tio.c_icanon <- false;
-  tio.c_echo <- false;
-  tio.c_echoe <- false;
-  tio.c_echok <- false;
-  tio.c_echonl <- false;
-  (* tio.c_iexten <- false; *)
-
-  (* special characters *)
-  tio.c_vmin <- 1;
-  tio.c_vtime <- 0;
-  Unix.tcsetattr Unix.stdin TCSADRAIN tio;
+      (* special characters *)
+      c_vmin = 1;
+      c_vtime = 0;
+    };
+  in Unix.tcsetattr Unix.stdin TCSADRAIN tio;
 
   let exception Sigchld in
   let sigchld = Eio.Condition.create () in
   let handle_sigchld (_signum : int) = Eio.Condition.broadcast sigchld in
   ignore (Sys.signal Sys.sigchld (Signal_handle handle_sigchld));
+
   try
     (* don't close PTY file descriptors *)
     let close_unix = false in
