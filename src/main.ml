@@ -38,6 +38,9 @@ let () =
     tio.c_vtime <- 0;
     Unix.tcsetattr Unix.stdin TCSADRAIN tio;
 
+    let handle_sigchild (_signum : int) = exit 1 in
+    ignore (Sys.signal Sys.sigchld (Signal_handle handle_sigchild));
+
     let close_unix = true in
     Eio.Fiber.both
       (fun () -> Eio.Switch.run @@ fun sw ->
