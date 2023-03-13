@@ -30,3 +30,11 @@ build: [
   ]
 ]
 dev-repo: "git+https://github.com/username/reponame.git"
+pin-depends: [
+  # https://github.com/ocaml-multicore/eio/pull/435
+  ["eio.dev" "git+https://github.com/patricoferris/eio.git#76ceaced57529618c577f6d5efcd61ecf6d91d0f"]
+  ["eio_main.dev" "git+https://github.com/patricoferris/eio.git#76ceaced57529618c577f6d5efcd61ecf6d91d0f"]
+  ["eio_linux.dev" "git+https://github.com/patricoferris/eio.git#76ceaced57529618c577f6d5efcd61ecf6d91d0f"]
+  ["eio_posix.dev" "git+https://github.com/patricoferris/eio.git#76ceaced57529618c577f6d5efcd61ecf6d91d0f"]
+  ["eio_luv.dev" "git+https://github.com/patricoferris/eio.git#76ceaced57529618c577f6d5efcd61ecf6d91d0f"]
+]

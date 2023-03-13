@@ -2,7 +2,12 @@
   inputs = {
     opam-nix.url = "github:tweag/opam-nix";
     flake-utils.url = "github:numtide/flake-utils";
+    opam-repository = {
+      url = "github:ocaml/opam-repository";
+      flake = false;
+    };
     opam-nix.inputs.nixpkgs.follows = "nixpkgs";
+    opam-nix.inputs.opam-repository.follows = "opam-repository";
   };
   outputs = { self, nixpkgs, flake-utils, opam-nix, ... }@inputs:
     let package = "ocaml_exec_shell";
@@ -16,6 +21,7 @@
         };
         query = {
           ocaml-base-compiler = "*";
+          ocamlfind = "1.9.5";
         };
         overlay = final: prev: {
           "${package}" = prev.${package}.overrideAttrs (_: {
