@@ -56,16 +56,10 @@ let client ~stdout ~stdin pty =
   (* restore tio *)
   Unix.tcsetattr Unix.stdin TCSADRAIN savedTio
 
-external action_dup2 : unit -> Eio_unix.Private.Fork_action.fork_fn = "eio_unix_fork_dup2"
-let action_dup2 = action_dup2 ()
-let dup2 oldfd newfd : Eio_unix.Private.Fork_action.t
-  = { run = fun k -> k (Obj.repr (action_dup2, oldfd, newfd)) }
-
-external action_switch_controlling_pty : unit -> Eio_unix.Private.Fork_action.fork_fn = "eio_unix_fork_switch_controlling_pty"
-let action_switch_controlling_pty = action_switch_controlling_pty ()
-let switch_controlling_pty pty : Eio_unix.Private.Fork_action.t
-  = { run = fun k -> k (Obj.repr (action_switch_controlling_pty, pty)) }
-
+external action_setup_shell : unit -> Eio_unix.Private.Fork_action.fork_fn = "eio_unix_fork_setup_shell"
+let action_setup_shell = action_setup_shell ()
+let setup_shell pty : Eio_unix.Private.Fork_action.t
+  = { run = fun k -> k (Obj.repr (action_setup_shell, pty)) }
 
 let () =
   Eio_main.run @@ fun env ->
@@ -76,19 +70,13 @@ let () =
     (* TODO Pty.window_size pty pty_window; *)
     (* TODO get default shell from /etc/passwd *)
     let
-      ptyAction = switch_controlling_pty pty and
-      stdinAction = dup2 pty.Pty.slavefd Unix.stdin and
-      stdoutAction = dup2 pty.Pty.slavefd Unix.stdout and
-      stderrAction = dup2 pty.Pty.slavefd Unix.stderr and
+      ptyAction = setup_shell pty and
       execvAction = Eio_linux.Low_level.Process.Fork_action.execve
         "/run/current-system/sw/bin/bash"
         ~argv:[| "-bash" |]
         ~env:[||]
     in Eio_linux.Low_level.Process.spawn ~sw [
       ptyAction;
-      stdinAction;
-      stdoutAction;
-      stderrAction;
       execvAction;
     ] in
   client
