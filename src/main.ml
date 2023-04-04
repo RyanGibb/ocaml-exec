@@ -68,7 +68,8 @@ let client ~stdout ~stdin pty =
   (* restore tio *)
   Unix.tcsetattr Unix.stdin TCSADRAIN savedTio
 
-external action_setup_shell : unit -> Eio_unix.Private.Fork_action.fork_fn = "eio_unix_fork_setup_shell"
+external action_setup_shell : unit -> Eio_unix.Private.Fork_action.fork_fn
+  = "eio_unix_fork_setup_shell"
 let action_setup_shell = action_setup_shell ()
 let setup_shell pty : Eio_unix.Private.Fork_action.t
   = { run = fun k -> k (Obj.repr (action_setup_shell, pty)) }
