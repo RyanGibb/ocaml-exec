@@ -47,6 +47,7 @@ let client ~stdout ~stdin pty =
       let ws = Pty.tty_window_size () in
       ignore (Pty.set_window_size pty ws);
     in
+    handle_sigwinch sigwinch;
     ignore (Sys.signal sigwinch (Signal_handle handle_sigwinch));
 
   try
