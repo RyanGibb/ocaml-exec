@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2004 Anil Madhavapeddy <anil@recoil.org>
+ * Copyright (c) 2020–2021 Craig Ferguson <me@craigfe.io>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +23,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <signal.h>
 
 #include <pty.h>
 
@@ -46,8 +48,7 @@
 
 /* Raise a Pty_error exception; be careful that errno is something
  * meaningful when this function is called */
-static void
-pty_error(char *msg)
+static void pty_error(char *msg)
 {
     char errbuf[1024];
     snprintf(errbuf, sizeof errbuf, "%s: %s", msg, strerror(errno));
@@ -55,8 +56,7 @@ pty_error(char *msg)
 }
 
 /* Wrapper for openpty(3), returns variant type pty */
-value
-pty_open_pty(value unit)
+value pty_open_pty(value unit)
 {
     CAMLparam1 (unit);
     char namebuf[64];
@@ -77,8 +77,7 @@ pty_open_pty(value unit)
 
 /* Takes variant type pty and switches controlling terminals.
  * Raises Pty_error on error, returns unit otherwise */
-value
-pty_switch_controlling_tty(value pty)
+value pty_switch_controlling_tty(value pty)
 {
     CAMLparam1 (pty);
     int fd, ttyfd;
@@ -123,17 +122,16 @@ pty_switch_controlling_tty(value pty)
 }
 
 /* Change the window size of the pty, returns unit */
-value
-pty_window_size(value pty, value pty_window)
+value pty_window_size(value pty, value pty_window)
 {
     CAMLparam2 (pty, pty_window);
     int ptyfd;
     struct winsize w;
     
-    w.ws_row = Int_val(Field(pty_window, 0));
-    w.ws_col = Int_val(Field(pty_window, 1));
-    w.ws_xpixel = Int_val(Field(pty_window, 2));
-    w.ws_ypixel = Int_val(Field(pty_window, 3));
+    w.ws_row = Int32_val(Field(pty_window, 0));
+    w.ws_col = Int32_val(Field(pty_window, 1));
+    w.ws_xpixel = Int32_val(Field(pty_window, 2));
+    w.ws_ypixel = Int32_val(Field(pty_window, 3));
     
     ptyfd = Int_val(Field(pty, 0));
     ioctl(ptyfd, TIOCSWINSZ, &w);
@@ -141,3 +139,32 @@ pty_window_size(value pty, value pty_window)
     CAMLreturn (Val_unit);
 }
 
+value pty_tty_window_size(value unit)
+{
+    CAMLparam1 (unit);
+    CAMLlocal1(pty_window);
+
+    struct winsize w;
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1)
+        memset(&w, 0, sizeof(w));
+
+    pty_window = caml_alloc_small(4, 0);
+    Store_field(pty_window, 0, caml_copy_int32(w.ws_row));
+    Store_field(pty_window, 1, caml_copy_int32(w.ws_col));
+    Store_field(pty_window, 2, caml_copy_int32(w.ws_xpixel));
+    Store_field(pty_window, 3, caml_copy_int32(w.ws_ypixel));
+
+    fprintf(stdout, "%d %d %d %d\n", w.ws_col, w.ws_row, w.ws_xpixel, w.ws_ypixel);
+
+    CAMLreturn (pty_window);
+}
+
+// From https://github.com/craigfe/progress/blob/42759d57cb5f437cf4c84c5258be0a6422d649ae/src/terminal/terminal_stubs.c
+value ocaml_terminal_get_sigwinch (value unit)
+{
+  CAMLparam1(unit);
+  CAMLlocal1(result);
+  result = caml_alloc(1, 0);
+  Store_field(result, 0, Val_int (SIGWINCH));
+  CAMLreturn(result);
+}

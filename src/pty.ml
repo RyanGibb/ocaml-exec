@@ -19,7 +19,9 @@ let _ = Callback.register_exception "pty_error" (Pty_error "")
 (* External declarations of Pty bindings *)
 external open_pty : unit -> pty = "pty_open_pty"
 external switch_controlling_pty : pty -> unit = "pty_switch_controlling_tty"
-external window_size : pty -> pty_window -> unit = "pty_window_size"
+external set_window_size : pty -> pty_window -> unit = "pty_window_size"
+external tty_window_size : unit -> pty_window = "pty_tty_window_size"
+external get_sigwinch : unit -> int option = "ocaml_terminal_get_sigwinch"
 
 (* Convenience ML functions *)
 let close_pty pty =

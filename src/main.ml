@@ -33,10 +33,21 @@ let client ~stdout ~stdin pty =
     };
   in Unix.tcsetattr Unix.stdin TCSADRAIN tio;
 
+  (* handle child stopping *)
   let exception Sigchld in
   let sigchld = Eio.Condition.create () in
   let handle_sigchld (_signum : int) = Eio.Condition.broadcast sigchld in
   ignore (Sys.signal Sys.sigchld (Signal_handle handle_sigchld));
+
+  (* handle window size change *)
+  match Pty.get_sigwinch () with
+  | None -> ()
+  | Some sigwinch ->
+    let handle_sigwinch (_signum : int) =
+      let ws = Pty.tty_window_size () in
+      ignore (Pty.set_window_size pty ws);
+    in
+    ignore (Sys.signal sigwinch (Signal_handle handle_sigwinch));
 
   try
     (* don't close PTY file descriptors *)
@@ -67,7 +78,6 @@ let () =
   let pty = Pty.open_pty () in
   (* spawn shell 'server' as child process *)
   let server =
-    (* TODO Pty.window_size pty pty_window; *)
     (* TODO get default shell from /etc/passwd *)
     let
       ptyAction = setup_shell pty and
