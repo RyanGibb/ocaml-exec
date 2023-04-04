@@ -85,7 +85,7 @@ let () =
       execvAction = Eio_linux.Low_level.Process.Fork_action.execve
         "/run/current-system/sw/bin/bash"
         ~argv:[| "-bash" |]
-        ~env:[||]
+        ~env:(Unix.unsafe_environment ())
     in Eio_linux.Low_level.Process.spawn ~sw [
       ptyAction;
       execvAction;
