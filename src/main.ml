@@ -80,12 +80,14 @@ let () =
   let pty = Pty.open_pty () in
   (* spawn shell 'server' as child process *)
   let server =
-    (* TODO get default shell from /etc/passwd *)
+    let pw = Unix.getpwuid (Unix.getuid ()) in
     let
       ptyAction = setup_shell pty and
       execvAction = Eio_linux.Low_level.Process.Fork_action.execve
-        "/run/current-system/sw/bin/bash"
-        ~argv:[| "-bash" |]
+        pw.pw_shell
+        (* The shell name is preceded by '-' to indicate
+           that this is a login shell. *)
+        ~argv:[| "-" ^ (Filename.basename pw.pw_shell) |]
         ~env:(Unix.unsafe_environment ())
     in Eio_linux.Low_level.Process.spawn ~sw [
       ptyAction;
