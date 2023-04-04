@@ -154,8 +154,6 @@ value pty_tty_window_size(value unit)
     Store_field(pty_window, 2, caml_copy_int32(w.ws_xpixel));
     Store_field(pty_window, 3, caml_copy_int32(w.ws_ypixel));
 
-    fprintf(stdout, "%d %d %d %d\n", w.ws_col, w.ws_row, w.ws_xpixel, w.ws_ypixel);
-
     CAMLreturn (pty_window);
 }
 
