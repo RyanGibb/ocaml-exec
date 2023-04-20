@@ -2,4 +2,6 @@
  (public_name ocaml_exec_shell)
  (name main)
  (libraries unix eio_main eio_linux)
- (foreign_stubs (language c) (names pty fork_actions)))
+ (foreign_stubs
+  (language c)
+  (names pty fork_actions)))
