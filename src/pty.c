@@ -48,7 +48,7 @@
 
 /* Raise a Pty_error exception; be careful that errno is something
  * meaningful when this function is called */
-static void pty_error(char *msg)
+static void pty_error(const char *msg)
 {
     char errbuf[1024];
     snprintf(errbuf, sizeof errbuf, "%s: %s", msg, strerror(errno));
@@ -81,8 +81,8 @@ value pty_switch_controlling_tty(value pty)
 {
     CAMLparam1 (pty);
     int fd, ttyfd;
-    char *ttyname;
-    
+    const char *ttyname;
+
     /* Disconnect from the old tty */
     fd = open(_PATH_TTY, O_RDWR | O_NOCTTY);
     if (fd != -1) {

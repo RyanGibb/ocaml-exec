@@ -23,7 +23,7 @@ static void action_setup_shell(int errors, value v_config) {
 	value pty = Field(v_config, 1);
 
 	int fd, masterfd, slavefd;
-	char *ttyname;
+	const char *ttyname;
 
 	masterfd = Int_val(Field(pty, 0));
 	slavefd = Int_val(Field(pty, 1));
